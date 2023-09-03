@@ -1,0 +1,13 @@
+https://nn.cs.utexas.edu/downloads/papers/stanley.ec02.pdf
+V 3.1 Encoding
+V     Mutations
+V 3.2 Innovation Number
+V     Crossover
+_ 3.3 Speciation
+V 3.4 Minimal Structure
+_ 4.1 Parameters
+
+V Activation
+
+_ Export
+_ Import
