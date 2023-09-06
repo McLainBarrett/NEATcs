@@ -57,7 +57,7 @@ namespace NEAT {
 				foreach (NE nn in population)
 					nn.Mutate();
 			}
-			System.Console.WriteLine(population[0]);
+			Console.WriteLine(population[0]);
 		}
 
 		static float XOR(NE nn) {
@@ -115,7 +115,9 @@ namespace NEAT {
 					for (int j = 0; j < size[i]; j++) {
 						Node node = nodes[lastLayer + size[i-1] + j];
 						for (int k = lastLayer; k < lastLayer+size[i-1]; k++) {
-							node.Connections.Add(new Connection(k, node.Index, 1, 0));
+							Connection conn = new Connection(k, node.Index, 1, 0);
+							connections.Add(conn);
+							node.Connections.Add(conn);
 						}
 					}
 					lastLayer += size[i-1];
@@ -287,7 +289,6 @@ namespace NEAT {
 				foreach (Connection conn in connections) {
 					output += conn.ToString();
 				}
-
 				return output;
 			}
 
