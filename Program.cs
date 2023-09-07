@@ -5,21 +5,30 @@
 namespace NEAT {
 	internal class Program {
 		static void Main(string[] args) {
-			XORproblem();
+			//XORproblem();
 			//NE ne = new NE(new int[] { 2, 2, 1});
-
+			List<float> results = new List<float>();
+			int successes = 0;
+			for (int i = 0; i < 100; i++) {
+				results.Add(XORproblem());
+				if (results[i] > -0.5)
+					successes++;
+				Console.WriteLine(i + " -- " + Math.Round(results[i], 2) + " -- " + Math.Round(successes/(i+1f)*100) + "%");
+			}
+			Console.WriteLine(String.Format("Total Successes = {0}", successes));
 		}
 
-		static void XORproblem() {
+		static float XORproblem() {
 			//Create population
 			List<NE> population = new List<NE>();
-			for (int i = 0; i < 20; i++) {
-				population.Add(new NE(new int[] { 3, 3, 1}));
+			for (int i = 0; i < 100; i++) {
+				population.Add(new NE(new int[] { 3, 2, 1}));
 				population[i].Mutate();
 			}
 
 			//Train population
-			for (int i = 0; i < 1200; i++) {
+			int cycles = 10000;
+			for (int i = 0; i < cycles; i++) {
 				List<float> fitnesses = new List<float>();
 				//Assess
 				for (int j = 0; j < population.Count; j++) {
@@ -30,7 +39,7 @@ namespace NEAT {
 				}
 
 				//Record average fitness
-				System.Console.WriteLine(String.Format("{0}: {1} \t {2}", i+1, fitnesses.Average(), fitnesses.Max()));
+				//System.Console.WriteLine(String.Format("{0}: {1} \t {2}", i+1, fitnesses.Average(), fitnesses.Max()));
 
 				//--Crossover, Mutate
 
@@ -39,8 +48,15 @@ namespace NEAT {
 				population.Sort((x, y) => fitnesses[temp.IndexOf(x)].CompareTo(fitnesses[temp.IndexOf(y)]));
 				population.Reverse();
 
-				Console.WriteLine(XORv(population[0]));
-				
+				if (i == 999) {
+					for (int j = 0; j < population.Count; j++) {
+						//Console.WriteLine(population[j].fitness);
+					}
+				}
+
+				if (i == cycles - 1)
+					break;
+
 				//Select using ranking
 				var survivors = new List<NE>();
 				for (int j = 0; j < population.Count / 2; j++) {
@@ -56,8 +72,15 @@ namespace NEAT {
 				//Mutate all networks
 				foreach (NE nn in population)
 					nn.Mutate();
+
+				if (i % 100 == 0) {
+					//Console.WriteLine(i + " -- " + fitnesses.Average());
+				}
 			}
-			Console.WriteLine(population[0]);
+			//Console.WriteLine(population[0]);
+			//Console.WriteLine(population[0].fitness);
+			XORv(population[0]);
+			return population[0].fitness;
 		}
 
 		static float XOR(NE nn) {
@@ -144,8 +167,8 @@ namespace NEAT {
 				return new Random().NextDouble() < probability;
 			}
 			public void Mutate() {
-				float prob = 0.05f;
-				float range = 3;
+				float prob = 0.07f;
+				float range = 5;
 				//Mutate weights and biases
 				for (int i = 0; i < nodes.Count; i++)
 					if (chance(prob))
@@ -223,14 +246,14 @@ namespace NEAT {
 
 						Node prevNode = nodes[connection.From];
 						float weight = connection.Weight;
+						
 						if (connection.From != Index)
 							sum += prevNode.Value * weight;
 						else
 							sum += State * weight;
 					}
 					State = sum;
-					float range = 10;
-					Value = range / (1 + (float)Math.Exp(-State)) - range/2;// 1 / (1 + (float)Math.Exp(-State));
+					Value = 2 / (1 + (float)Math.Exp(-State)) - 1;// 1 / (1 + (float)Math.Exp(-State));
 				}
 				public Node Copy() {
 					return new Node(Index, Bias, Type);
@@ -300,6 +323,7 @@ namespace NEAT {
 			public static List<(bool isNewNode, int A, int B, int GIN)> mutations = new List<(bool isNewNode, int A, int B, int GIN)>();
 		}
 
+		/*
 		class NN {
 
 			public List<Node> nodes = new List<Node>();
@@ -436,6 +460,7 @@ namespace NEAT {
 					mutations.Add((true, oldConn.From, oldConn.To, gin));
 				}
 				*/
+		/*
 			}
 			public static NN Crossover(NN parentA, NN parentB, float fitnessA, float fitnessB) {
 				if (fitnessA < fitnessB) {
@@ -570,7 +595,7 @@ namespace NEAT {
 				return GIN;
 			}
 			public static List<(bool isNewNode, int A, int B, int GIN)> mutations = new List<(bool isNewNode, int A, int B, int GIN)>();
-		}
+		}*/
 
 	}
 }

@@ -1,4 +1,6 @@
-https://nn.cs.utexas.edu/downloads/papers/stanley.ec02.pdf
+_ Rebuild NEAT (new branch)
+_ Test with more pop/gens
+
 V 3.1 Encoding
 V     Mutations
 V 3.2 Innovation Number
