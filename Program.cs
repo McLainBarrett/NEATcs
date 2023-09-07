@@ -1,8 +1,4 @@
-﻿//https://nn.cs.utexas.edu/downloads/papers/stanley.ec02.pdf
-//https://towardsdatascience.com/neuro-evolution-on-steroids-82bd14ddc2f6
-//https://arxiv.org/pdf/1703.00548.pdf
-
-namespace NEAT {
+﻿namespace NEAT {
 	internal class Program {
 		static void Main(string[] args) {
 			//XORproblem();
@@ -20,14 +16,14 @@ namespace NEAT {
 
 		static float XORproblem() {
 			//Create population
-			List<NE> population = new List<NE>();
+			List<NN> population = new List<NN>();
 			for (int i = 0; i < 100; i++) {
-				population.Add(new NE(new int[] { 3, 2, 1}));
+				population.Add(new NN(3, 1));
 				population[i].Mutate();
 			}
 
 			//Train population
-			int cycles = 10000;
+			int cycles = 1000;
 			for (int i = 0; i < cycles; i++) {
 				List<float> fitnesses = new List<float>();
 				//Assess
@@ -44,13 +40,13 @@ namespace NEAT {
 				//--Crossover, Mutate
 
 				//Sort population by fitness
-				var temp = new List<NE>(population);
+				var temp = new List<NN>(population);
 				population.Sort((x, y) => fitnesses[temp.IndexOf(x)].CompareTo(fitnesses[temp.IndexOf(y)]));
 				population.Reverse();
 
 				if (i == 999) {
 					for (int j = 0; j < population.Count; j++) {
-						//Console.WriteLine(population[j].fitness);
+						Console.WriteLine(population[j].fitness);
 					}
 				}
 
@@ -58,7 +54,7 @@ namespace NEAT {
 					break;
 
 				//Select using ranking
-				var survivors = new List<NE>();
+				var survivors = new List<NN>();
 				for (int j = 0; j < population.Count / 2; j++) {
 					survivors.Add(population[j]);
 					var clone = population[j].Copy();
@@ -70,11 +66,11 @@ namespace NEAT {
 				population.AddRange(survivors);
 
 				//Mutate all networks
-				foreach (NE nn in population)
+				foreach (NN nn in population)
 					nn.Mutate();
 
 				if (i % 100 == 0) {
-					//Console.WriteLine(i + " -- " + fitnesses.Average());
+					Console.WriteLine(i + " -- " + fitnesses.Average());
 				}
 			}
 			//Console.WriteLine(population[0]);
@@ -83,7 +79,7 @@ namespace NEAT {
 			return population[0].fitness;
 		}
 
-		static float XOR(NE nn) {
+		static float XOR(NN nn) {
 			float fitness = 0;
 			/*	00->0
 				01->1
@@ -96,8 +92,7 @@ namespace NEAT {
 			fitness += (float)Math.Abs(0 - nn.Activate(new List<float>() {1, 1, 1})[0]);
 			return -fitness;
 		}
-
-		static float XORv(NE nn) {
+		static float XORv(NN nn) {
 			float fitness = 0;
 			/*	00->0
 				01->1
@@ -117,218 +112,13 @@ namespace NEAT {
 			return -fitness;
 		}
 
-		class NE {//Normal neuralevolutionary network
-			public List<Node> nodes = new List<Node>();
-			public List<Connection> connections = new List<Connection>();
-			int[] size;
-			public float fitness;
-			public NE(int[] Size) {
-				size = Size;
-				//Add nodes
-				for (int i = 0; i < size.Length; i++) {
-					for (int j = 0; j < size[i]; j++) {
-						NodeType nt = i == 0 ? NodeType.Input : (i == size.Length - 1 ? NodeType.Output : NodeType.Hidden);
-						nodes.Add(new Node(nodes.Count, 0, nt));
-					}
-				}
-
-				//Add connections
-				int lastLayer = 0;
-				for (int i = 1; i < size.Length; i++) {
-					for (int j = 0; j < size[i]; j++) {
-						Node node = nodes[lastLayer + size[i-1] + j];
-						for (int k = lastLayer; k < lastLayer+size[i-1]; k++) {
-							Connection conn = new Connection(k, node.Index, 1, 0);
-							connections.Add(conn);
-							node.Connections.Add(conn);
-						}
-					}
-					lastLayer += size[i-1];
-				}
-			}
-
-			public List<float> Activate(List<float> input) {
-				List<float> output = new List<float>();
-
-				for (int i = 0; i < nodes.Count; i++) {
-					Node node = nodes[i];
-					if (node.Type == NodeType.Input)
-						node.Value = input[i] + node.Bias;
-					else
-						node.Activate(nodes);
-
-					if (node.Type == NodeType.Output)
-						output.Add(node.Value);
-				}
-				return output;
-			}
-
-			private static bool chance(float probability) {
-				return new Random().NextDouble() < probability;
-			}
-			public void Mutate() {
-				float prob = 0.07f;
-				float range = 5;
-				//Mutate weights and biases
-				for (int i = 0; i < nodes.Count; i++)
-					if (chance(prob))
-						nodes[i].Bias += (float)(new Random().NextDouble() * range * 2 - range);
-				for (int i = 0; i < connections.Count; i++)
-					if (chance(prob))
-						connections[i].Weight += (float)(new Random().NextDouble() * range * 2 - range);
-			}
-			/*
-			public static NE Crossover(NE parentA, NE parentB) {
-				//ParentA is *always* more fit than parentB
-				if (parentA.fitness < parentB.fitness) {
-					NE tempNN = parentA;
-					parentA = parentB;
-					parentB = tempNN;
-					float tempFit = parentA.fitness;
-					parentA.fitness = parentB.fitness;
-					parentB.fitness = tempFit;
-				}
-				
-				NE offspring = new NE(0, 0);
-
-				//Splice connections
-				int j = 0;
-				var Aconns = parentA.connections;
-				var Bconns = parentB.connections;
-				for (int i = 0; i < Aconns.Count; i++) {//For each gene of the fitter parent...
-					Connection conn;
-					for (; j < Bconns.Count - 1 && Aconns[i].Innovation > Bconns[j].Innovation; j++) { }//Get next B connection until it is the same or greater inov number
-					if (Aconns[i].Innovation == Bconns[j].Innovation)//If genes are matching, choose randomly
-						conn = chance(0.5f) ? Aconns[i] : Bconns[j];
-					else
-						conn = Aconns[i];//If only fitter parent has gene, pass to offspring
-					offspring.connections.Add(conn.Copy());
-				}
-
-				//Splice nodes
-
-				for (int i = 0; i < parentA.nodes.Count; i++) {//For each gene of the fitter parent...
-					Node node;
-					if (i < parentB.nodes.Count)//If genes are matching, choose randomly
-						node = chance(0.5f) ? parentA.nodes[i] : parentB.nodes[i];
-					else
-						node = parentA.nodes[i];//If only fitter parent has gene, pass to offspring
-					offspring.nodes.Add(node.Copy());
-				}
-
-				//Update node connections list
-				for (int i = 0; i < offspring.connections.Count; i++) {
-					var conn = offspring.connections[i];
-					offspring.nodes[conn.To].Connections.Add(conn);
-				}
-				offspring.size = (parentA.size.Inputs, parentA.size.Outputs);
-
-				return offspring;
-			}*/
-
-			public class Node {
-				public float State = 0;//Before activation function
-				public float Value = 0;//After activation function
-				public int Index;
-				public float Bias;
-				public NodeType Type;
-				public List<Connection> Connections = new List<Connection>();
-				public Node(int index, float bias, NodeType type) {
-					Index = index;
-					Bias = bias;
-					Type = type;
-				}
-				public void Activate(List<Node> nodes) {
-					float sum = Bias;
-					foreach (Connection connection in Connections) {
-						if (!connection.Enabled)
-							continue;
-
-						Node prevNode = nodes[connection.From];
-						float weight = connection.Weight;
-						
-						if (connection.From != Index)
-							sum += prevNode.Value * weight;
-						else
-							sum += State * weight;
-					}
-					State = sum;
-					Value = 2 / (1 + (float)Math.Exp(-State)) - 1;// 1 / (1 + (float)Math.Exp(-State));
-				}
-				public Node Copy() {
-					return new Node(Index, Bias, Type);
-				}
-				public override string ToString() {
-					return String.Format("[{0} {1}]", Index, Bias);
-				}
-			}
-			public enum NodeType {
-				Input,
-				Hidden,
-				Output
-			}
-			public class Connection {
-				public int From;
-				public int To;
-				public float Weight;
-				public int Innovation;
-				public bool Enabled = true;
-
-				public Connection(int from, int to, float weight, int innovation) {
-					From = from;
-					To = to;
-					Weight = weight;
-					Innovation = innovation;
-				}
-				public Connection Copy() {
-					Connection copy = new Connection(From, To, Weight, Innovation);
-					copy.Enabled = Enabled;
-					return copy;
-				}
-				public override string ToString() {
-					return String.Format("({0}->{1} ; {2} {3} {4})\n", From, To, Weight, Innovation, Enabled);
-				}
-			}
-
-			public NE Copy() {
-				NE copy = new NE(size);
-
-				for (int i = 0; i < nodes.Count; i++)
-					copy.nodes[i].Bias = nodes[i].Bias;
-
-				for (int i = 0; i < connections.Count; i++)
-					copy.connections[i].Weight = connections[i].Weight;
-
-				return copy;
-			}
-
-			public override string ToString() {
-				string output = "";
-
-				foreach (Node node in nodes) {
-					output += node.ToString();
-				}
-				output += "\n";
-				foreach (Connection conn in connections) {
-					output += conn.ToString();
-				}
-				return output;
-			}
-
-			public static int GIN = 0;
-			public static int GetGIN(int count = 1) {
-				GIN += count;
-				return GIN;
-			}
-			public static List<(bool isNewNode, int A, int B, int GIN)> mutations = new List<(bool isNewNode, int A, int B, int GIN)>();
-		}
-
-		/*
 		class NN {
 
 			public List<Node> nodes = new List<Node>();
 			public List<Connection> connections = new List<Connection>();
 			public (int Inputs, int Outputs) size;
+			public float fitness;
+
 			public NN(int InputCount, int OutputCount) {
 				size = (InputCount, OutputCount);
 				//Add input and output nodes
@@ -350,7 +140,6 @@ namespace NEAT {
 				if (GetGIN(0) == 0)
 					GetGIN(connections.Count);
 			}
-
 			public List<float> Activate(List<float> input) {
 				List<float> output = new List<float>();
 
@@ -460,7 +249,6 @@ namespace NEAT {
 					mutations.Add((true, oldConn.From, oldConn.To, gin));
 				}
 				*/
-		/*
 			}
 			public static NN Crossover(NN parentA, NN parentB, float fitnessA, float fitnessB) {
 				if (fitnessA < fitnessB) {
@@ -510,6 +298,21 @@ namespace NEAT {
 				offspring.size = (parentA.size.Inputs, parentA.size.Outputs);
 
 				return offspring;
+			}
+			public NN Copy() {
+				NN copy = new NN(size.Inputs, size.Outputs);
+
+				//Duplicate nodes and connections
+				for (int i = 0; i < nodes.Count; i++)
+					copy.nodes.Add(nodes[i].Copy());
+				for (int i = 0; i < connections.Count; i++)
+					copy.connections.Add(connections[i].Copy());
+
+				//Reconnect node connection lists
+				foreach (var conn in copy.connections)
+					copy.nodes[conn.To].Connections.Add(conn);
+
+				return copy;
 			}
 
 			public class Node {
@@ -595,7 +398,6 @@ namespace NEAT {
 				return GIN;
 			}
 			public static List<(bool isNewNode, int A, int B, int GIN)> mutations = new List<(bool isNewNode, int A, int B, int GIN)>();
-		}*/
-
+		}
 	}
 }
