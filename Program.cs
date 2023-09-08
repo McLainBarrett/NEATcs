@@ -1,15 +1,13 @@
 ﻿namespace NEAT {
 	internal class Program {
 		static void Main(string[] args) {
-			//XORproblem();
-			//NE ne = new NE(new int[] { 2, 2, 1});
 			List<float> results = new List<float>();
 			int successes = 0;
 			for (int i = 0; i < 100; i++) {
 				results.Add(XORproblem());
 				if (results[i] > -0.5)
 					successes++;
-				Console.WriteLine(i + " -- " + Math.Round(results[i], 2) + " -- " + Math.Round(successes/(i+1f)*100) + "%");
+				 Console.WriteLine(i + " -- " + Math.Round(results[i], 2) + " -- " + Math.Round(successes/(i+1f)*100) + "%");
 			}
 			Console.WriteLine(String.Format("Total Successes = {0}", successes));
 		}
@@ -25,33 +23,25 @@
 			//Train population
 			int cycles = 1000;
 			for (int i = 0; i < cycles; i++) {
-				List<float> fitnesses = new List<float>();
 				//Assess
+				List<float> fitnesses = new List<float>();
 				for (int j = 0; j < population.Count; j++) {
-					var fit = XOR(population[j]);
-					population[j].fitness = fit;
-					//Console.WriteLine(fit);
-					fitnesses.Add(fit);
+					population[j].fitness = XOR(population[j]);
+					fitnesses.Add(population[j].fitness);
 				}
-
-				//Record average fitness
-				//System.Console.WriteLine(String.Format("{0}: {1} \t {2}", i+1, fitnesses.Average(), fitnesses.Max()));
 
 				//--Crossover, Mutate
 
 				//Sort population by fitness
-				var temp = new List<NN>(population);
-				population.Sort((x, y) => fitnesses[temp.IndexOf(x)].CompareTo(fitnesses[temp.IndexOf(y)]));
-				population.Reverse();
+				population.Sort((x, y) => y.fitness.CompareTo(x.fitness));
 
-				if (i == 999) {
-					for (int j = 0; j < population.Count; j++) {
-						Console.WriteLine(population[j].fitness);
-					}
-				}
 
-				if (i == cycles - 1)
+				if (i == cycles - 1) {
+					//for (int j = 0; j < population.Count; j++) {
+					//	Console.WriteLine(population[j].fitness);
+					//}
 					break;
+				}
 
 				//Select using ranking
 				var survivors = new List<NN>();
@@ -66,25 +56,30 @@
 				population.AddRange(survivors);
 
 				//Mutate all networks
-				foreach (NN nn in population)
+				foreach (NN nn in population) {
+					nn.Clear();
 					nn.Mutate();
-
-				if (i % 100 == 0) {
-					Console.WriteLine(i + " -- " + fitnesses.Average());
 				}
+					
+
+				if (i % 100 == 0)
+					Console.WriteLine(i + " -- " + Math.Round(fitnesses.Average(), 2) + " -- " + Math.Round(fitnesses.Max(), 2));
 			}
 			//Console.WriteLine(population[0]);
 			//Console.WriteLine(population[0].fitness);
-			XORv(population[0]);
+			//population.Sort((x, y) => y.fitness.CompareTo(x.fitness));
+
+			Console.WriteLine(XORv(population[0]));
+			population[0].Clear();
+			Console.WriteLine(XORv(population[0]));
+			Console.WriteLine(population[0].fitness);
+			//Console.WriteLine(population[0]);
+			Console.WriteLine(population[0].nodes.Count + " -- " + population[0].connections.Count);
 			return population[0].fitness;
 		}
 
 		static float XOR(NN nn) {
 			float fitness = 0;
-			/*	00->0
-				01->1
-				10->1
-				11->0  */
 
 			fitness += (float)Math.Abs(0 - nn.Activate(new List<float>() {0, 0, 1})[0]);
 			fitness += (float)Math.Abs(1 - nn.Activate(new List<float>() {0, 1, 1})[0]);
@@ -94,20 +89,16 @@
 		}
 		static float XORv(NN nn) {
 			float fitness = 0;
-			/*	00->0
-				01->1
-				10->1
-				11->0  */
 
 			fitness += (float)Math.Abs(0 - nn.Activate(new List<float>() { 0, 0, 1 })[0]);
 			fitness += (float)Math.Abs(1 - nn.Activate(new List<float>() { 0, 1, 1 })[0]);
 			fitness += (float)Math.Abs(1 - nn.Activate(new List<float>() { 1, 0, 1 })[0]);
 			fitness += (float)Math.Abs(0 - nn.Activate(new List<float>() { 1, 1, 1 })[0]);
 
-			Console.WriteLine("0, 0 -> " + nn.Activate(new List<float>() { 0, 0, 1 })[0]);
-			Console.WriteLine("0, 1 -> " + nn.Activate(new List<float>() { 0, 1, 1 })[0]);
-			Console.WriteLine("1, 0 -> " + nn.Activate(new List<float>() { 1, 0, 1 })[0]);
-			Console.WriteLine("1, 1 -> " + nn.Activate(new List<float>() { 1, 1, 1 })[0]);
+			Console.WriteLine("0, 0 -> " + Math.Round(nn.Activate(new List<float>() { 0, 0, 1 })[0]), 2);
+			Console.WriteLine("0, 1 -> " + Math.Round(nn.Activate(new List<float>() { 0, 1, 1 })[0]), 2);
+			Console.WriteLine("1, 0 -> " + Math.Round(nn.Activate(new List<float>() { 1, 0, 1 })[0]), 2);
+			Console.WriteLine("1, 1 -> " + Math.Round(nn.Activate(new List<float>() { 1, 1, 1 })[0]), 2);
 
 			return -fitness;
 		}
@@ -118,6 +109,8 @@
 			public List<Connection> connections = new List<Connection>();
 			public (int Inputs, int Outputs) size;
 			public float fitness;
+
+			public bool allowRecursion = true;
 
 			public NN(int InputCount, int OutputCount) {
 				size = (InputCount, OutputCount);
@@ -178,10 +171,9 @@
 				float addConn = 0.05f;
 				float addNode = 0.03f;
 				if (chance(addConn)) {//Add connection
-									  //Select random node
-					Node node = nodes[new Random().Next(nodes.Count)];
+					Node node = nodes[new Random().Next(nodes.Count)];//Select random node
 					//Find a node that has no connections from this node
-					var otherNodes = nodes.FindAll(x => x.Connections.FindAll(y => y.From == node.Index).Count == 0);
+					var otherNodes = nodes.FindAll(x => x.Connections.FindAll(y => y.From == node.Index).Count == 0 && (allowRecursion || (x.Connections.FindAll(y => y.To == node.Index).Count == 0 && x != node)));
 					if (otherNodes.Count > 0) {
 						Node otherNode = otherNodes[new Random().Next(otherNodes.Count)];
 
@@ -300,7 +292,8 @@
 				return offspring;
 			}
 			public NN Copy() {
-				NN copy = new NN(size.Inputs, size.Outputs);
+				NN copy = new NN(0, 0);
+				copy.size = size;
 
 				//Duplicate nodes and connections
 				for (int i = 0; i < nodes.Count; i++)
@@ -313,6 +306,13 @@
 					copy.nodes[conn.To].Connections.Add(conn);
 
 				return copy;
+			}
+
+			public void Clear() {
+				foreach (Node node in nodes) {
+					node.State = 0;
+					node.Value = 0;
+				}
 			}
 
 			public class Node {
