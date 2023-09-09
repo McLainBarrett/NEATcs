@@ -1,5 +1,4 @@
-_ Rebuild NEAT (new branch)
-_ Test with more pop/gens
+_ Add Speciation
 
 V 3.1 Encoding
 V     Mutations

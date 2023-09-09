@@ -26,6 +26,42 @@
 			return 0;
 		}
 
+		static float NNdistance(NN a, NN b) {
+
+			float co1 = 1, co2 = 1, co3 = 1;
+			int ai = a.connections.Count - 1;
+			int bi = b.connections.Count - 1;
+
+			int disjoint = 0;
+			int excess = 0;
+			float weightDiff = 0;
+			int total = Math.Max(ai, bi);
+			bool isNowDisjoint = false;
+
+			//Iterate backwards through genes
+			while (Math.Min(ai, bi) >= 0) {
+				if (a.connections[ai].Innovation == b.connections[bi].Innovation) {
+					weightDiff += Math.Abs(a.connections[ai].Weight - b.connections[bi].Weight);
+					ai--; bi--;
+
+				} else {
+					if (a.connections[ai].Innovation > b.connections[bi].Innovation)
+						ai--;
+					else
+						bi--;
+
+					//Count excess first, then after first same case, count disjoint
+					if (isNowDisjoint)
+						disjoint++;
+					else
+						excess++;
+				}
+			}
+			disjoint += Math.Abs(ai - bi);
+
+			return disjoint * co1 / total + excess * co2 / total + weightDiff * co3;
+		}
+
 		static float XORproblem() {
 			//Create population
 			List<NN> population = new List<NN>();

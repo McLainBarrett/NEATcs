@@ -1,3 +1,1 @@
-﻿Fixed error slip
-Combined XOR() and XORv()
-Added weighted sampling
+﻿_ Speciation
