@@ -203,3 +203,48 @@ class NE {//Normal neuralevolutionary network
 			}
 			public static List<(bool isNewNode, int A, int B, int GIN)> mutations = new List<(bool isNewNode, int A, int B, int GIN)>();
 		}
+}
+
+//Sort population by fitness
+				population.Sort((x, y) => y.fitness.CompareTo(x.fitness));
+				if (k == cycles - 1)
+					break;
+
+				//Select using ranking
+				var survivors = new List<NN>();
+				int targ = population.Count / 2;
+				for (int i = 0; i < targ; i++) {
+					int index = SelectWeighted(population.Count);
+					survivors.Add(population[index]);
+					population.RemoveAt(index);
+				}
+
+
+
+				//--Crossover and Mutate--//
+				List<(NN a, NN b)> pairOff(List<NN> NNs) {
+					var nns = new List<NN>(NNs);
+					var pairs = new List<(NN a, NN b)>();
+					for (int i = 0; i < NNs.Count/2; i++) {
+						var a = nns[new Random().Next(nns.Count)];
+						nns.Remove(a);
+						var b = nns[new Random().Next(nns.Count)];
+						nns.Remove(b);
+						pairs.Add((a, b));
+					}
+					return pairs;
+				}
+
+				var offspring = new List<NN>();
+				var pairs = pairOff(survivors);
+				var pairs2 = pairOff(survivors);
+				for (int i = 0; i < pairs.Count; i++) {
+					var pair = pairs[i];
+					offspring.Add(NN.Crossover(pair.a, pair.b));
+					pair = pairs2[i];
+					offspring.Add(NN.Crossover(pair.a, pair.b));
+				}
+
+				population.Clear();
+				population.AddRange(survivors);
+				population.AddRange(offspring);

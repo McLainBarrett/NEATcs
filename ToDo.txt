@@ -1,10 +1,8 @@
-_ Add Speciation
-
 V 3.1 Encoding
 V     Mutations
 V 3.2 Innovation Number
 V     Crossover
-_ 3.3 Speciation
+V 3.3 Speciation
 V 3.4 Minimal Structure
 _ 4.1 Parameters
 
