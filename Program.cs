@@ -1,220 +1,18 @@
-﻿using System.Collections.Generic;
-
-namespace NEAT {
+﻿namespace NEAT {
 	internal class Program {
 		static void Main(string[] args) {
 			List<float> results = new List<float>();
 			int successes = 0;
 			for (int i = 0; i < 100; i++) {
-				results.Add(XORproblem());
+				var top = NN.Train(XOR)[0];
+				XOR(top, true);
+				results.Add(top.fitness);
 				if (results[i] > 15)
 					successes++;
-				//Console.WriteLine(i + " -- " + Math.Round(results[i], 2) + " -- " + Math.Round(successes/(i+1f)*100) + "%");
 				Console.WriteLine(String.Format("Game: {0} -- Result: {1} -- Successes|Failures|Percentage: {2}|{3}|{4}%", 
 					i, Math.Round(results[i], 2), successes, i - successes + 1, Math.Round(successes / (i + 1f) * 100)));
 			}
 			Console.WriteLine(String.Format("Total Successes = {0}", successes));
-		}
-		
-		static float XORproblem() {
-			//Create population
-			List<NN> population = new List<NN>();
-			List<NN> species = new List<NN>();
-			List<int> speciesCounts = new List<int>() { 1 };
-
-			int cycles = 1000;
-			int generationSize = 100;
-			float c1 = 1;//Excess distance
-			float c2 = 1;//Disjoint distance
-			float c3 = 0.4f;//Weight distance
-			float c4 = 3;//Species distance cutoff
-			//Stagnation cutoff = 15
-			
-
-			for (int i = 0; i < generationSize; i++) {
-				population.Add(new NN(3, 1));
-				population[i].Mutate();
-			}
-			species.Add(population[0].Copy());
-
-			//Train population
-			for (int k = 0; k < cycles; k++) {
-
-				//--Speciate--//
-				//Remove empty species, reset count
-				for (int i = 0; i < species.Count; i++) {
-					if (speciesCounts[i] == 0) {
-						speciesCounts.RemoveAt(i);
-						species.RemoveAt(i);
-					} else {
-						speciesCounts[i] = 0;
-					}
-				}
-
-				//For each population, iterate through each species, if comparability is within threshhold, assign species number
-				//If end is reached, create new species with it as example
-				float NNdistance(NN a, NN b) {
-
-					int ai = a.connections.Count - 1;
-					int bi = b.connections.Count - 1;
-
-					int disjoint = 0;
-					int excess = 0;
-					float weightDiff = 0;
-					int total = Math.Max(ai, bi);
-					bool isNowDisjoint = false;
-
-					//Iterate backwards through genes
-					while (Math.Min(ai, bi) >= 0) {
-						if (a.connections[ai].Innovation == b.connections[bi].Innovation) {
-							weightDiff += Math.Abs(a.connections[ai].Weight - b.connections[bi].Weight);
-							ai--; bi--;
-
-						} else {
-							if (a.connections[ai].Innovation > b.connections[bi].Innovation)
-								ai--;
-							else
-								bi--;
-
-							//Count excess first, then after first same case, count disjoint
-							if (isNowDisjoint)
-								disjoint++;
-							else
-								excess++;
-						}
-					}
-					disjoint += Math.Abs(ai - bi);
-
-					return disjoint * c1 / total + excess * c2 / total + weightDiff * c3;
-				}
-
-				float speciesThreshhold = 1;
-				for (int i = 0; i < population.Count; i++) {
-					for (int j = 0; j < species.Count; j++) {
-						if (NNdistance(population[i], species[j]) < speciesThreshhold) {
-							population[i].species = j;
-							speciesCounts[j]++;
-							break;
-						}
-						if (j == species.Count-1) {//No species found
-							species.Add(population[i].Copy());
-							speciesCounts.Add(1);
-						}
-					}
-				}
-
-				//Update representatives
-				//Each existing species is represented by a random genome inside the species from the previous generation.
-				var rand = new Random();
-				List<int> chosenReps = new List<int>();
-				for (int i = 0; i < speciesCounts.Count; i++)
-					chosenReps.Add(rand.Next(speciesCounts[i]));
-
-				for (int i = 0; i < population.Count; i++) {
-					int mySpecies = population[i].species;
-					chosenReps[mySpecies]--;
-					if (chosenReps[mySpecies] == 0)
-						species[mySpecies] = population[i].Copy();
-				}
-
-
-
-				//--Assess--//
-				List<float> fitnesses = new List<float>();
-				//var speciesPops = new List<List<NN>>(new List<NN>[species.Count]);
-				var speciesPops = new List<List<NN>>();
-				for (int i = 0; i < species.Count; i++)
-					speciesPops.Add(new List<NN>());
-				List<float> speciesFitnesses = new List<float>(new float[species.Count]);
-				float totalFitness = 0;
-				for (int i = 0; i < population.Count; i++) {
-					float fitness = XOR(population[i]) / speciesCounts[population[i].species];
-					fitnesses.Add(XOR(population[i]));
-					population[i].fitness = fitness;
-					speciesFitnesses[population[i].species] += fitness;
-					speciesPops[population[i].species].Add(population[i]);
-					totalFitness += fitness;
-				}
-
-
-				if (k == cycles - 1)
-					break;//Return unaltered results when finished
-
-
-				//--Crossover and Mutate--//
-				int SelectWeighted(int max) {
-					float rand = (float)new Random().NextDouble();
-					float sum = 0;
-					float total = 0;
-					for (int i = 0; i < max; i++)
-						total++;
-					for (int i = 0; i < max; i++) {
-						sum += i;
-						if (rand < sum / total)
-							return i;
-					}
-					return 0;
-				}
-
-				for (int j = 0; j < speciesPops.Count; j++) {
-					//Sort and cull population by fitness
-					var speciesPopulation = speciesPops[j];
-					speciesPops[j].Sort((x, y) => y.fitness.CompareTo(x.fitness));
-					var survivors = new List<NN>();
-					int targ = speciesPopulation.Count / 2;
-					for (int i = 0; i < targ; i++) {
-						int index = SelectWeighted(speciesPopulation.Count);
-						survivors.Add(speciesPopulation[index]);
-						speciesPopulation.RemoveAt(index);
-					}
-					
-					//Crossover population, replace with offspring
-					int newPopCount = (int)Math.Floor(generationSize * speciesFitnesses[j] / totalFitness);
-					var crossPool = new List<NN>(speciesPopulation);
-					var offspring = new List<NN>();
-
-					while (offspring.Count < newPopCount) {
-						if (speciesPopulation.Count == 1) {//If only one member...
-							var clone = speciesPopulation[0].Copy();//Use mitosis
-							clone.Mutate();
-							offspring.Add(clone);
-							continue;
-						}
-
-						//Otherwise...
-						var a = crossPool[new Random().Next(crossPool.Count)];
-						crossPool.Remove(a);
-						var b = crossPool[new Random().Next(crossPool.Count)];
-						crossPool.Remove(b);
-						offspring.Add(NN.Crossover(a, b));
-						if (crossPool.Count < 2)//If not enough...
-							crossPool.AddRange(speciesPopulation);//Refill crossing population
-					}
-
-					speciesPops[j] = new List<NN>(offspring);
-				}
-
-				population.Clear();
-				for (int i = 0; i < speciesPops.Count; i++)
-					population.AddRange(speciesPops[i]);
-
-				//Mutate all networks
-				foreach (NN nn in population) {
-					nn.Clear();
-					nn.Mutate();
-				}
-
-				if (k % 100 == 0)
-					Console.WriteLine(k + " -- " + Math.Round(fitnesses.Average(), 2) + " -- " + Math.Round(fitnesses.Max(), 2));
-			}
-
-			for (int i = 0; i < population.Count; i++)
-				population[i].fitness = XOR(population[i]);
-			population.Sort((x, y) => y.fitness.CompareTo(x.fitness));
-
-			XOR(population[0], true);
-			Console.WriteLine(String.Format("Nodes: {0}; Connections: {1}", population[0].nodes.Count, population[0].connections.Count));
-			return population[0].fitness;
 		}
 
 		static float XOR(NN nn, bool verbose = false) {
@@ -454,6 +252,205 @@ namespace NEAT {
 				return copy;
 			}
 
+			public static List<NN> Train(Func<NN, bool, float> func, int cycles = 1000, int generationSize = 100, float c1 = 1, float c2 = 1, float c3 = 0.4f, float c4 = 3) {
+				//Hyperparameters:
+				//c1: Excess distance; c2: Disjoint distance
+				//c3: Weight distance; c4: Species distance cutoff
+				//Stagnation cutoff = 15?
+				float trainingCutoff = 15.5f;
+
+				//Create population
+				List<NN> population = new List<NN>();
+				List<NN> species = new List<NN>();
+				List<int> speciesCounts = new List<int>() { 1 };
+
+				for (int i = 0; i < generationSize; i++) {
+					population.Add(new NN(3, 1));
+					population[i].Mutate();
+				}
+				species.Add(population[0].Copy());
+
+				//Train population
+				for (int k = 0; k < cycles; k++) {
+
+					//--Speciate--//
+					//Remove empty species, reset count
+					for (int i = 0; i < species.Count; i++) {
+						if (speciesCounts[i] == 0) {
+							speciesCounts.RemoveAt(i);
+							species.RemoveAt(i);
+						} else {
+							speciesCounts[i] = 0;
+						}
+					}
+
+					//For each population, iterate through each species, if comparability is within threshhold, assign species number
+					//If end is reached, create new species with it as example
+					float NNdistance(NN a, NN b) {
+
+						int ai = a.connections.Count - 1;
+						int bi = b.connections.Count - 1;
+
+						int disjoint = 0;
+						int excess = 0;
+						float weightDiff = 0;
+						int total = Math.Max(ai, bi);
+						bool isNowDisjoint = false;
+
+						//Iterate backwards through genes
+						while (Math.Min(ai, bi) >= 0) {
+							if (a.connections[ai].Innovation == b.connections[bi].Innovation) {
+								weightDiff += Math.Abs(a.connections[ai].Weight - b.connections[bi].Weight);
+								ai--; bi--;
+
+							} else {
+								if (a.connections[ai].Innovation > b.connections[bi].Innovation)
+									ai--;
+								else
+									bi--;
+
+								//Count excess first, then after first same case, count disjoint
+								if (isNowDisjoint)
+									disjoint++;
+								else
+									excess++;
+							}
+						}
+						disjoint += Math.Abs(ai - bi);
+
+						return disjoint * c1 / total + excess * c2 / total + weightDiff * c3;
+					}
+
+					float speciesThreshhold = 1;
+					for (int i = 0; i < population.Count; i++) {
+						for (int j = 0; j < species.Count; j++) {
+							if (NNdistance(population[i], species[j]) < speciesThreshhold) {
+								population[i].species = j;
+								speciesCounts[j]++;
+								break;
+							}
+							if (j == species.Count - 1) {//No species found
+								species.Add(population[i].Copy());
+								speciesCounts.Add(1);
+							}
+						}
+					}
+
+					//Update representatives
+					//Each existing species is represented by a random genome inside the species from the previous generation.
+					var rand = new Random();
+					List<int> chosenReps = new List<int>();
+					for (int i = 0; i < speciesCounts.Count; i++)
+						chosenReps.Add(rand.Next(speciesCounts[i]));
+
+					for (int i = 0; i < population.Count; i++) {
+						int mySpecies = population[i].species;
+						chosenReps[mySpecies]--;
+						if (chosenReps[mySpecies] == 0)
+							species[mySpecies] = population[i].Copy();
+					}
+
+
+
+					//--Assess--//
+					List<float> fitnesses = new List<float>();
+					//var speciesPops = new List<List<NN>>(new List<NN>[species.Count]);
+					var speciesPops = new List<List<NN>>();
+					for (int i = 0; i < species.Count; i++)
+						speciesPops.Add(new List<NN>());
+					List<float> speciesFitnesses = new List<float>(new float[species.Count]);
+					float totalFitness = 0;
+					for (int i = 0; i < population.Count; i++) {
+						float fitness = func(population[i], false);
+						fitnesses.Add(fitness);
+						fitness /= speciesCounts[population[i].species];
+						population[i].fitness = fitness;
+						speciesFitnesses[population[i].species] += fitness;
+						speciesPops[population[i].species].Add(population[i]);
+						totalFitness += fitness;
+					}
+
+
+					if (k == cycles - 1 || fitnesses.Max() >= trainingCutoff)
+						break;//Return unaltered results when finished
+
+
+					//--Crossover and Mutate--//
+					int SelectWeighted(int max) {
+						float rand = (float)new Random().NextDouble();
+						float sum = 0;
+						float total = 0;
+						for (int i = 0; i < max; i++)
+							total++;
+						for (int i = 0; i < max; i++) {
+							sum += i;
+							if (rand < sum / total)
+								return i;
+						}
+						return 0;
+					}
+
+					for (int j = 0; j < speciesPops.Count; j++) {
+						//Sort and cull population by fitness
+						var speciesPopulation = speciesPops[j];
+						speciesPops[j].Sort((x, y) => y.fitness.CompareTo(x.fitness));
+						var survivors = new List<NN>();
+						int targ = speciesPopulation.Count / 2;
+						for (int i = 0; i < targ; i++) {
+							int index = SelectWeighted(speciesPopulation.Count);
+							survivors.Add(speciesPopulation[index]);
+							speciesPopulation.RemoveAt(index);
+						}
+
+						//Crossover population, replace with offspring
+						int newPopCount = (int)Math.Floor(generationSize * speciesFitnesses[j] / totalFitness);
+						var crossPool = new List<NN>(speciesPopulation);
+						var offspring = new List<NN>();
+
+						while (offspring.Count < newPopCount) {
+							if (speciesPopulation.Count == 1) {//If only one member...
+								var clone = speciesPopulation[0].Copy();//Use mitosis
+								clone.Mutate();
+								offspring.Add(clone);
+								continue;
+							}
+
+							//Otherwise...
+							var a = crossPool[new Random().Next(crossPool.Count)];
+							crossPool.Remove(a);
+							var b = crossPool[new Random().Next(crossPool.Count)];
+							crossPool.Remove(b);
+							offspring.Add(NN.Crossover(a, b));
+							if (crossPool.Count < 2)//If not enough...
+								crossPool.AddRange(speciesPopulation);//Refill crossing population
+						}
+
+						speciesPops[j] = new List<NN>(offspring);
+					}
+
+					population.Clear();
+					for (int i = 0; i < speciesPops.Count; i++)
+						population.AddRange(speciesPops[i]);
+
+					//Mutate all networks
+					foreach (NN nn in population) {
+						nn.Clear();
+						nn.Mutate();
+					}
+
+					if (k % 100 == 0)
+						Console.WriteLine(k + " -- " + Math.Round(fitnesses.Average(), 2) + " -- " + Math.Round(fitnesses.Max(), 2));
+				}
+
+				for (int i = 0; i < population.Count; i++)
+					population[i].fitness = func(population[i], false);
+				population.Sort((x, y) => y.fitness.CompareTo(x.fitness));
+
+				//func(population[0], true);
+				//Console.WriteLine(String.Format("Nodes: {0}; Connections: {1}", population[0].nodes.Count, population[0].connections.Count));
+				return population;
+			}
+
 			public void Clear() {
 				foreach (Node node in nodes) {
 					node.State = 0;
@@ -477,6 +474,9 @@ namespace NEAT {
 					float sum = Bias;
 					foreach (Connection connection in Connections) {
 						if (!connection.Enabled)
+							continue;
+
+						if (connection.From >= nodes.Count)
 							continue;
 
 						Node prevNode = nodes[connection.From];
