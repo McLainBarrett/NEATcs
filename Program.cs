@@ -247,7 +247,8 @@
 
 				//Reconnect node connection lists
 				foreach (var conn in copy.connections)
-					copy.nodes[conn.To].Connections.Add(conn);
+					if (copy.nodes.Count > conn.To)
+						copy.nodes[conn.To].Connections.Add(conn);
 
 				return copy;
 			}
@@ -256,7 +257,7 @@
 				//Hyperparameters:
 				//c1: Excess distance; c2: Disjoint distance
 				//c3: Weight distance; c4: Species distance cutoff
-				//Stagnation cutoff = 15?
+				int stagnationCutoff = 15;
 				float trainingCutoff = 15.5f;
 
 				//Create population
