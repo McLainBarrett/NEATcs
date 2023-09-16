@@ -1,1 +1,2 @@
-﻿
+﻿_ Added species class, replaced multiple lists with it
+_ Broke species as a whole
