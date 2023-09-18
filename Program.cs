@@ -289,7 +289,7 @@
 							species[i].subPopulation.Clear();
 						}
 					}
-					Console.WriteLine("Removed Species: " + removedSpecies);
+					//Console.WriteLine("Removed Species: " + removedSpecies);
 
 
 					//For each population, iterate through each species, if comparability is within threshhold, assign species number
@@ -330,7 +330,7 @@
 					}
 
 					float speciesThreshhold = 1;
-					Console.WriteLine("SC: " + species.Count);
+					//Console.WriteLine("SC: " + species.Count);
 					for (int i = 0; i < population.Count; i++) {
 						for (int j = 0; j < species.Count; j++) {
 							if (NNdistance(population[i], species[j].representative) < speciesThreshhold) {
@@ -363,6 +363,13 @@
 						if (chosenReps[mySpecies] == 0)
 							species[mySpecies].representative = population[i].Copy();
 					}
+
+
+					for (int i = 0; i < species.Count; i++)
+						if (species[i].Count == 0)
+							species.RemoveAt(i);
+					Console.WriteLine(String.Format("POP: {0} NSC: {1}", population.Count, species.Count));
+
 
 
 
@@ -407,18 +414,24 @@
 
 
 					//--Crossover and Mutate--//
-					int SelectWeighted(int max) {
+					/*int SelectWeighted(int max) {
 						float rand = (float)new Random().NextDouble();
 						float sum = 0;
 						float total = 0;
 						for (int i = 0; i < max; i++)
-							total++;
+							total += i;
 						for (int i = 0; i < max; i++) {
 							sum += i;
 							if (rand < sum / total)
-								return i;
+								return max - i - 1;
 						}
 						return 0;
+					}*/
+
+					int SelectWeighted(int max) {
+						float r = (float)new Random().NextDouble();
+						float i = (float)(1 + Math.Sqrt(1 + 4 * r * max * (max - 1))) / 2;
+						return max - (int)Math.Floor(i) - 1;
 					}
 
 					for (int j = 0; j < species.Count; j++) { //speciesPops.Count; j++) {
