@@ -1,3 +1,9 @@
+V Fix major overspeciation bug
+_ Fix underpopulation
+_ Add species stagnation dieoff
+
+
+
 V Activation
 V 3.1 Encoding
 V     Mutations

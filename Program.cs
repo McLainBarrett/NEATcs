@@ -4,7 +4,7 @@
 			List<float> results = new List<float>();
 			int successes = 0;
 			for (int i = 0; i < 100; i++) {
-				var top = NN.Train(XOR)[0];
+				var top = NN.Train(XOR, c4: 6)[0];
 				XOR(top, true);
 				results.Add(top.fitness);
 				if (results[i] > 15)
@@ -337,16 +337,13 @@
 							if (NNdistance(population[i], species[j].representative) < speciesThreshhold) {
 								population[i].species = species[j];
 								species[j].subPopulation.Add(population[i]);
-								//speciesCounts[j]++;
 								break;
-							}
-							if (j == species.Count - 1) {//No species found
+							} else if (j == species.Count - 1) {//No species found
 								Species speci = new Species(population[i]);
+								population[i].species = speci;
 								speci.subPopulation.Add(population[i]);
 								species.Add(speci);
-
-								//species.Add(population[i].Copy());
-								//speciesCounts.Add(1);
+								break;
 							}
 						}
 					}
@@ -399,14 +396,13 @@
 					//Sort by fitness
 					//If a species had not improved fitness for 15 generations
 					//Cull them, remove fitnesses from total fitnesses
-					/*int speciesNum = speciesCounts.Count;
-					if (speciesNum > 0) {
-						for (int i = 0; i < speciesCounts.Count; i++) {
-							if (speciesNum <= 1)
-								break;
-
+					species.Sort((x, y) => y.speciesFitness.CompareTo(x.speciesFitness));
+					/*for (int i = 2; i < species.Count; i++) {
+						if (species[i].history.Count > 15 && species[i].speciesFitness - species[i].history[14] < 0.5f) {
+							totalFitness -= species[i].speciesFitness;
+							species.RemoveAt(i);
 						}
-					*/
+					}*/
 
 
 
@@ -435,6 +431,17 @@
 						return max - (int)Math.Floor(i) - 1;
 					}
 
+
+					var popCounts = new int[species.Count];
+					for (int i = 0; i < popCounts.Length; i++)
+						popCounts[i] = (int)Math.Floor(generationSize * species[i].speciesFitness / totalFitness);
+					int error1 = generationSize - popCounts.Sum();
+					for (int i = 0; i < Math.Min(error1, popCounts.Length); i++)
+						popCounts[i]++;
+
+
+					float popError = 0;
+
 					for (int j = 0; j < species.Count; j++) { //speciesPops.Count; j++) {
 						//Sort and cull population by fitness
 						//List<NN> speciesPopulation = species[j].subPopulation;
@@ -449,10 +456,16 @@
 						}
 						speci.subPopulation.Clear();
 						//speci.subPopulation.AddRange(survivors);
-						
 
 						//Crossover population, replace with offspring
-						int newPopCount = (int)Math.Round(generationSize * speci.speciesFitness / totalFitness);
+						int newPopCount = popCounts[j];//(int)Math.Floor(generationSize * speci.speciesFitness / totalFitness);
+						popError += generationSize * speci.speciesFitness / totalFitness - newPopCount;
+						Console.WriteLine(String.Format("SpeciesPop: {0}  Error: {1}", newPopCount, popError));
+						if (popError >= 1) {
+							newPopCount++;
+							popError--;
+						}
+
 						List<NN> crossPool = new List<NN>(survivors);
 						List<NN> offspring = new List<NN>();
 
@@ -463,6 +476,7 @@
 								offspring.Add(clone);
 								continue;
 							} else if (survivors.Count == 0) {
+								Console.WriteLine("Populating failed, unborn children: " + newPopCount);
 								break;
 							}
 
@@ -489,7 +503,7 @@
 						nn.Clear();
 						nn.Mutate();
 					}
-
+					Console.WriteLine(population.Count);
 					if (k % 100 == 0)
 						Console.WriteLine(k + " -- " + Math.Round(fitnesses.Average(), 2) + " -- " + Math.Round(fitnesses.Max(), 2));
 				}
@@ -578,7 +592,15 @@
 			public class Species {
 				public NN representative;
 				public List<NN> subPopulation = new List<NN>();
-				public float speciesFitness;
+				public float speciesFitness {
+					get { return history[0]; }
+					set {
+						history.Insert(0, value);
+						if (history.Count > 20)
+							history.RemoveAt(20);
+					}
+				}
+				public List<float> history = new List<float>() { 0 };
 				public int Count {
 					get { return subPopulation.Count; }
 				}
@@ -587,6 +609,7 @@
 				public Species(NN Representative) {
 					representative = Representative.Copy();
 				}
+
 			}
 
 			public override string ToString() {
