@@ -440,6 +440,12 @@
 						popCounts[i]++;
 
 
+					string myOut = "";
+					for (int i = 0; i < popCounts.Length; i++)
+						myOut += popCounts[i] + ", ";
+
+					Console.WriteLine(popCounts.Sum() + " -> " + myOut);
+
 					float popError = 0;
 
 					for (int j = 0; j < species.Count; j++) { //speciesPops.Count; j++) {
