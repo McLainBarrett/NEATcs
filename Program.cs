@@ -287,6 +287,7 @@
 						} else {
 							//speciesCounts[i] = 0;
 							species[i].subPopulation.Clear();
+							species[i].speciesFitness = 0;
 						}
 					}
 					//Console.WriteLine("Removed Species: " + removedSpecies);
@@ -365,10 +366,10 @@
 					}
 
 
-					for (int i = 0; i < species.Count; i++)
-						if (species[i].Count == 0)
-							species.RemoveAt(i);
-					Console.WriteLine(String.Format("POP: {0} NSC: {1}", population.Count, species.Count));
+					//for (int i = 0; i < species.Count; i++)
+					//	if (species[i].Count == 0)
+					//		species.RemoveAt(i);
+					//Console.WriteLine(String.Format("POP: {0} NSC: {1}", population.Count, species.Count));
 
 
 
@@ -451,7 +452,7 @@
 						
 
 						//Crossover population, replace with offspring
-						int newPopCount = (int)Math.Floor(generationSize * speci.speciesFitness / totalFitness);
+						int newPopCount = (int)Math.Round(generationSize * speci.speciesFitness / totalFitness);
 						List<NN> crossPool = new List<NN>(survivors);
 						List<NN> offspring = new List<NN>();
 
