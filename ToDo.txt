@@ -1,4 +1,4 @@
-_ Compare results to paper results
+V Compare results to paper results
 _ Compare/rectify differences between paper and implementation
 _ Speciation stagnation not working properly?
 _ Fitness backsliding?
@@ -19,6 +19,11 @@ _ Implement 4.1 fully
 	X	in which case each weight had a 0.90 chance of being uniformly perturbed and 
 		a 0.10 chance of being assigned a new random value.
 	_ 0.75 chance of disabling an inherited gene if it was disabled in either parent.
+
+_ Comparable To Paper Results
+	_ No failure in 100 runs
+	_ ~32 generations to finish
+	_ 2.5 nodes and 7.5 connections
 
 _ Cleanup
 
