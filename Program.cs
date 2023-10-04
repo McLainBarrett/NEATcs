@@ -4,8 +4,8 @@
 			List<float> results = new List<float>();
 			List<int> generationsTaken = new List<int>();
 			int successes = 0;
-			for (int i = 0; i < 100; i++) {
-				var myResults = NN.Train(XOR, cycles: 100, c4: 3);
+			for (int i = 0; i < 25; i++) {
+				var myResults = NN.Train(XOR, generationSize:150, cycles: 300);
 				var top = myResults.Item1[0];
 				generationsTaken.Add(myResults.Item2);
 				XOR(top, true);
@@ -101,7 +101,10 @@
 				float mutBias = 0.80f;
 				if (chance(mutWeight)) {
 					for (int i = 0; i < connections.Count; i++)
-						connections[i].Weight += (float)(new Random().NextDouble() * 2 - 1);
+						if (chance(0.9f))
+							connections[i].Weight += (float)(new Random().NextDouble() * 2 - 1);
+						else
+							connections[i].Weight = (float)(new Random().NextDouble() * 12 - 6);
 				}
 				if (chance(mutBias)) {
 					for (int i = 0; i < nodes.Count; i++)
@@ -244,24 +247,36 @@
 
 						int ai = a.connections.Count - 1;
 						int bi = b.connections.Count - 1;
+						bool aiIsExcess = ai > bi;
 
 						int disjoint = 0;
 						int excess = 0;
-						float weightDiff = 0;
-						int total = Math.Max(ai, bi);
+						int total = Math.Max(ai, bi) + 1;
+						if (total < 20)
+							total = 1;
 						bool isNowDisjoint = false;
+
+						float weightDiff = 0;
+						int weightTotal = 0;
 
 						//Iterate backwards through genes
 						while (Math.Min(ai, bi) >= 0) {
 							if (a.connections[ai].Innovation == b.connections[bi].Innovation) {
 								weightDiff += Math.Abs(a.connections[ai].Weight - b.connections[bi].Weight);
+								weightTotal++;
 								ai--; bi--;
+								isNowDisjoint = true;
 
 							} else {
-								if (a.connections[ai].Innovation > b.connections[bi].Innovation)
+								if (a.connections[ai].Innovation > b.connections[bi].Innovation) {
 									ai--;
-								else
+									if (!aiIsExcess)
+										isNowDisjoint = true;
+								} else {
 									bi--;
+									if (!aiIsExcess)
+										isNowDisjoint = true;
+								}
 
 								//Count excess first, then after first same case, count disjoint
 								if (isNowDisjoint)
@@ -272,7 +287,7 @@
 						}
 						disjoint += Math.Abs(ai - bi);
 
-						return disjoint * c1 / total + excess * c2 / total + weightDiff * c3;
+						return disjoint * c1 / total + excess * c2 / total + weightDiff * c3 / weightTotal;
 					}
 
 					for (int i = 0; i < population.Count; i++) {
@@ -292,10 +307,20 @@
 						}
 					}
 
+
+					//DEBUG: print species pops
+					string DEBUGOUT = "";
+					for (int i = 0; i < species.Count; i++) {
+						DEBUGOUT += species[i].Count + ", ";
+					}
+					Console.WriteLine(DEBUGOUT);
+
+
+
 					//Update representatives
 					//Each existing species is represented by a random genome inside the species from the previous generation.
 					var rand = new Random();
-					List<int> chosenReps = new List<int>();
+					/*List<int> chosenReps = new List<int>();
 					for (int i = 0; i < species.Count; i++)
 						chosenReps.Add(rand.Next(species[i].Count));
 
@@ -304,8 +329,16 @@
 						chosenReps[mySpecies]--;
 						if (chosenReps[mySpecies] == 0)
 							species[mySpecies].representative = population[i].Copy();
+					}*/
+					for (int i = 0; i < species.Count; i++) {
+						int index = rand.Next(species[i].Count);
+						if (species[i].Count > index)
+							species[i].representative = species[i].subPopulation[rand.Next(species[i].Count)].Copy();
+						else {
+							species.RemoveAt(i);
+							i--;
+						}
 					}
-
 
 
 					//--Assess--//
@@ -338,7 +371,7 @@
 					//Genus Stagnation
 					//If top hasn't improved for 20 generations
 					//Cull all but top two species
-					int genusStagGens = 100;
+					int genusStagGens = 20;
 					genusHistory.Add(fitnesses.Max());
 					if (genusHistory.Count > genusStagGens)
 						genusHistory.RemoveAt(0);
