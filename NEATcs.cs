@@ -1,11 +1,13 @@
-﻿namespace NEAT {
+﻿using Microsoft.VisualBasic.FileIO;
+
+namespace NEAT {
 	public class NEATcs {
 		static void Main(string[] args) {
 			List<float> results = new List<float>();
 			List<int> generationsTaken = new List<int>();
 			int successes = 0;
 			for (int i = 0; i < 25; i++) {
-				var myResults = NN.Train(XOR, generationSize:150, cycles: 300);
+				var myResults = Train(XOR, generationSize:150, cycles: 300);
 				var top = myResults.Item1[0];
 				generationsTaken.Add(myResults.Item2);
 				XOR(top, true);
@@ -282,29 +284,6 @@
 					return String.Format("({0}->{1} ; {2} {3} {4})\n", From, To, Weight, Innovation, Enabled);
 				}
 			}
-			public class Species {
-				public NN representative;
-				public List<NN> subPopulation = new List<NN>();
-				public float speciesFitness;
-				/*public float speciesFitness {
-					get { return history[0]; }
-					set {
-						history.Insert(0, value);
-						if (history.Count > 20)
-							history.RemoveAt(20);
-					}
-				}*/
-				public List<float> history = new List<float>();// { 0 };
-				public int Count {
-					get { return subPopulation.Count; }
-				}
-
-				public Species() { }
-				public Species(NN Representative) {
-					representative = Representative.Copy();
-				}
-
-			}
 
 			public override string ToString() {
 				string output = "";
@@ -318,6 +297,29 @@
 				}
 
 				return output;
+			}
+		}
+
+		public class Species {
+			public NN representative;
+			public List<NN> subPopulation = new List<NN>();
+			public float speciesFitness;
+			/*public float speciesFitness {
+				get { return history[0]; }
+				set {
+					history.Insert(0, value);
+					if (history.Count > 20)
+						history.RemoveAt(20);
+				}
+			}*/
+			public List<float> history = new List<float>();// { 0 };
+			public int Count {
+				get { return subPopulation.Count; }
+			}
+
+			//public Species() { }
+			public Species(NN Representative) {
+				representative = Representative.Copy();
 			}
 		}
 
