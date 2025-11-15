@@ -20,7 +20,7 @@
 			//Add connections from each input to each output
 			for (int i = 0; i < InputCount; i++) {
 				for (int j = 0; j < OutputCount; j++) {
-					Connection conn = new Connection(i, InputCount + j, 0, connections.Count);
+					Connection conn = new Connection(i, InputCount + j, 2*random.NextSingle()-1, connections.Count);
 					connections.Add(conn);
 					nodes[i].Connections.Add(conn);
 					nodes[InputCount + j].Connections.Add(conn);
@@ -379,11 +379,11 @@
 
 
 			//DEBUG: print species pops
-			string DEBUGOUT = "";
-			for (int i = 0; i < species.Count; i++) {
-				DEBUGOUT += species[i].Count + ", ";
-			}
-			Console.WriteLine(DEBUGOUT);
+			// string DEBUGOUT = "";
+			// for (int i = 0; i < species.Count; i++) {
+			// 	DEBUGOUT += species[i].Count + ", ";
+			// }
+			// Console.WriteLine(DEBUGOUT);
 
 
 
@@ -446,7 +446,7 @@
 			if (genusHistory.Count > genusStagGens)
 				genusHistory.RemoveAt(0);
 			if (genusHistory.Count >= genusStagGens && genusHistory[genusHistory.Count-1] - genusHistory[0] < 0.05f) {
-				Console.WriteLine("Genus Stagnation!" + k);
+				//Console.WriteLine("Genus Stagnation!" + k);
 				for (int i = 2; i < species.Count; i++) {
 					totalFitness -= species[i].speciesFitness;
 					species.RemoveAt(i);
@@ -457,7 +457,7 @@
 
 			//Break off if goal met
 			if (k == cycles - 1 || fitnesses.Max() >= trainingCutoff) {
-				Console.WriteLine("\n--Generations Taken: " + k);
+				//Console.WriteLine("--Generations Taken: " + k);
 				generationsTaken = k;
 				break;//Return unaltered results when finished
 			}
@@ -556,5 +556,6 @@
 		return GIN;
 	}
 	public static List<(bool isNewNode, int A, int B, int GIN)> mutations = new List<(bool isNewNode, int A, int B, int GIN)>();
+	public static Random random = new Random();
 
 }

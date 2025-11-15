@@ -6,18 +6,17 @@ public class Program {
 		List<float> results = new List<float>();
 		List<int> generationsTaken = new List<int>();
 		int successes = 0;
-		for (int i = 0; i < 25; i++) {
+		for (int i = 0; i < 100; i++) {
 			var myResults = Train(XOR, generationSize:150, cycles: 300);
 			var top = myResults.Item1[0];
 			generationsTaken.Add(myResults.Item2);
-			XOR(top, true);
+			//XOR(top, true);
 			results.Add(top.fitness);
 			if (results[i] > 15)
 				successes++;
 			Console.WriteLine(String.Format("Game: {0} -- Result: {1} -- Successes|Failures|Percentage: {2}|{3}|{4}% Size: {5} nodes Generations Taken: {6}", 
 				i, Math.Round(results[i], 2), successes, i - successes + 1, Math.Round(successes / (i + 1f) * 100), top.nodes.Count, generationsTaken.Average()));
 		}
-		Console.WriteLine(String.Format("Total Successes = {0}", successes));
 	}
 
 	static float XOR(NN nn, bool verbose = false) {
