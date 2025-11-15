@@ -1,15 +1,30 @@
-_ Rebuild NEAT (new branch)
-_ Test with more pop/gens
+V Compare results to paper results
+_ Compare/rectify differences between paper and implementation
+_ Speciation stagnation not working properly?
+_ Fitness backsliding?
 
-V 3.1 Encoding
-V     Mutations
-V 3.2 Innovation Number
-V     Crossover
-_ 3.3 Speciation
-V 3.4 Minimal Structure
-_ 4.1 Parameters
+_ Cleanup
 
-V Activation
+_ Implement 4.1 fully
+	V If the maximum fitness of a species did not improve (+0.5) in 15 generations, 
+		the networks in the stagnant species were not allowed to reproduce. (Unless species was in top 2)
 
-_ Export
-_ Import
+	V In each generation with more than five networks, 
+		the top NN was copied into the next generation unchanged.
+	_ In each generation, 25% of offspring resulted from mutation without crossover. 
+	_ The interspecies mating rate was 0.001. 
+
+	V 0.03 chance of adding a new node and 0.05 chance of adding a new link.
+	V 0.80 chance of a genome having its connection weights mutated, 
+	X	in which case each weight had a 0.90 chance of being uniformly perturbed and 
+		a 0.10 chance of being assigned a new random value.
+	_ 0.75 chance of disabling an inherited gene if it was disabled in either parent.
+
+_ Comparable To Paper Results
+	_ No failure in 100 runs
+	_ ~32 generations to finish
+	_ 2.5 nodes and 7.5 connections
+
+_ Cleanup
+
+_ Export/Import
