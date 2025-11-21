@@ -1,10 +1,3 @@
-V Compare results to paper results
-_ Compare/rectify differences between paper and implementation
-_ Speciation stagnation not working properly?
-_ Fitness backsliding?
-
-_ Cleanup
-
 _ Implement 4.1 fully
 	V If the maximum fitness of a species did not improve (+0.5) in 15 generations, 
 		the networks in the stagnant species were not allowed to reproduce. (Unless species was in top 2)
@@ -24,7 +17,3 @@ _ Comparable To Paper Results
 	_ No failure in 100 runs
 	_ ~32 generations to finish
 	_ 2.5 nodes and 7.5 connections
-
-_ Cleanup
-
-_ Export/Import

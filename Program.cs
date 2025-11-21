@@ -4,19 +4,23 @@ public class Program {
 
 	static void Main(string[] args) {
 		List<float> results = new List<float>();
+		List<int> nodeCounts = new List<int>();
 		List<int> generationsTaken = new List<int>();
 		int successes = 0;
-		for (int i = 0; i < 100; i++) {
-			var myResults = Train(XOR, generationSize:150, cycles: 300);
+		for (int i = 0; i < 20; i++) {
+			var myResults = Train(XOR, generationSize:150, cycles: 100);
 			var top = myResults.Item1[0];
-			generationsTaken.Add(myResults.Item2);
-			//XOR(top, true);
 			results.Add(top.fitness);
+			if (results[i] > 15)
+				generationsTaken.Add(myResults.Item2);
+			if (results[i] > 15)
+				nodeCounts.Add(top.nodes.Count - 4);
 			if (results[i] > 15)
 				successes++;
 			Console.WriteLine(String.Format("Game: {0} -- Result: {1} -- Successes|Failures|Percentage: {2}|{3}|{4}% Size: {5} nodes Generations Taken: {6}", 
-				i, Math.Round(results[i], 2), successes, i - successes + 1, Math.Round(successes / (i + 1f) * 100), top.nodes.Count, generationsTaken.Average()));
+				i, Math.Round(results[i], 2), successes, i - successes + 1, Math.Round(successes / (i + 1f) * 100), top.nodes.Count - 4, generationsTaken.Average()));
 		}
+		Console.WriteLine(String.Format("Av. nodes: {0}", Math.Round(nodeCounts.Average(), 4)));
 	}
 
 	static float XOR(NN nn, bool verbose = false) {
