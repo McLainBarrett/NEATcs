@@ -520,7 +520,9 @@
 					crossPool.Remove(a);
 					var b = crossPool[new Random().Next(crossPool.Count)];
 					crossPool.Remove(b);
-					offspring.Add(NN.Crossover(a, b));
+					NN child = NN.Crossover(a, b);
+					child.Mutate();
+					offspring.Add(child);
 					if (crossPool.Count < 2)//If not enough...
 						crossPool.AddRange(survivors);//Refill crossing population
 				}
@@ -535,7 +537,7 @@
 			//Mutate all networks
 			foreach (NN nn in population) {
 				nn.Clear();
-				nn.Mutate();
+				//nn.Mutate(); //Networks already mutated!
 			}
 
 
