@@ -58,14 +58,14 @@
 			//Mutate weights and biases
 			float mutWeight = 0.80f;
 			float mutBias = 0.80f;
-			if (chance(mutWeight)) {
+			if (chance(mutWeight)) {//Mutate weight...
 				for (int i = 0; i < connections.Count; i++)
 					if (chance(0.9f))
 						connections[i].Weight += (float)(new Random().NextDouble() * 2 - 1);
 					else
 						connections[i].Weight = (float)(new Random().NextDouble() * 12 - 6);
 			}
-			if (chance(mutBias)) {
+			if (chance(mutBias)) {//Mutate bias...
 				for (int i = 0; i < nodes.Count; i++)
 					nodes[i].Bias += (float)(new Random().NextDouble() * 2 - 1);
 			}
