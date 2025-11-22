@@ -489,15 +489,13 @@
 				List<NN> survivors = new List<NN>();
 				List<NN> offspring = new List<NN>();
 				if (speci.Count > 4)
-					offspring.Add(speci.subPopulation[0]);
+					offspring.Add(speci.subPopulation[0]); //Add best specimen unchanged
 				int targ = (int)Math.Ceiling(speci.Count / 2f);
-				int formerCount = speci.Count;
 				for (int i = 0; i < targ; i++) {
 					int index = SelectWeighted(speci.Count);
 					survivors.Add(speci.subPopulation[index]);
 					speci.subPopulation.RemoveAt(index);
 				}
-				
 				speci.subPopulation.Clear();
 
 				//Crossover population, replace with offspring
@@ -505,8 +503,9 @@
 				List<NN> crossPool = new List<NN>(survivors);
 
 				while (offspring.Count < newPopCount) {
-					if (offspring.Count < newPopCount * 0.25f || survivors.Count == 1) {//If only one member...
-						var clone = survivors[new Random().Next(survivors.Count)].Copy();//Use mitosis
+					//Quarter of offsprings result from mitosis
+					if (offspring.Count < newPopCount * 0.25f || survivors.Count == 1) { //Or if only one member
+						var clone = survivors[new Random().Next(survivors.Count)].Copy();
 						clone.Mutate();
 						offspring.Add(clone);
 						continue;
@@ -515,7 +514,7 @@
 						break;
 					}
 
-					//Otherwise...
+					//Otherwise cross from pool
 					var a = crossPool[new Random().Next(crossPool.Count)];
 					crossPool.Remove(a);
 					var b = crossPool[new Random().Next(crossPool.Count)];

@@ -4,7 +4,7 @@ _ Implement 4.1 fully
 
 	V In each generation with more than five networks, 
 		the top NN was copied into the next generation unchanged.
-	_ In each generation, 25% of offspring resulted from mutation without crossover. 
+	V In each generation, 25% of offspring resulted from mutation without crossover. 
 	_ The interspecies mating rate was 0.001. 
 
 	V 0.03 chance of adding a new node and 0.05 chance of adding a new link.
