@@ -124,11 +124,13 @@
 			for (int i = 0; i < Aconns.Count; i++) {//For each gene of the fitter parent...
 				Connection conn;
 				for (; j < Bconns.Count - 1 && Aconns[i].Innovation > Bconns[j].Innovation; j++) { }//Get next B connection until it is the same or greater inov number
-				if (Aconns[i].Innovation == Bconns[j].Innovation)//If genes are matching, choose randomly
-					conn = chance(0.5f) ? Aconns[i] : Bconns[j];
-				else
-					conn = Aconns[i];//If only fitter parent has gene, pass to offspring
-				offspring.connections.Add(conn.Copy());
+				if (Aconns[i].Innovation == Bconns[j].Innovation) {//If genes are matching, choose randomly
+					conn = chance(0.5f) ? Aconns[i].Copy() : Bconns[j].Copy();
+					if (!(Aconns[i].Enabled && Bconns[j].Enabled))
+						conn.Enabled = !chance(0.75);//0.75 chance of disabling an inherited gene if it was disabled in either parent.
+				} else
+					conn = Aconns[i].Copy();//If only fitter parent has gene, pass to offspring
+				offspring.connections.Add(conn);
 			}
 
 			//Splice nodes

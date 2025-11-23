@@ -10,7 +10,7 @@ _ Implement 4.1 fully
 	V 0.03 chance of adding a new node and 0.05 chance of adding a new link.
 	V 0.80 chance of a genome having its connection weights mutated, 
 		V	in which case each weight had a 0.90 chance of being uniformly perturbed and a 0.10 chance of being assigned a new random value.
-	_ 0.75 chance of disabling an inherited gene if it was disabled in either parent.
+	V 0.75 chance of disabling an inherited gene if it was disabled in either parent.
 
 _ Comparable To Paper Results
 	_ No failure in 100 runs
