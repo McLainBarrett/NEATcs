@@ -127,7 +127,7 @@
 				if (Aconns[i].Innovation == Bconns[j].Innovation) {//If genes are matching, choose randomly
 					conn = chance(0.5f) ? Aconns[i].Copy() : Bconns[j].Copy();
 					if (!(Aconns[i].Enabled && Bconns[j].Enabled))
-						conn.Enabled = !chance(0.75);//0.75 chance of disabling an inherited gene if it was disabled in either parent.
+						conn.Enabled = !chance(0.75f);//0.75 chance of disabling an inherited gene if it was disabled in either parent.
 				} else
 					conn = Aconns[i].Copy();//If only fitter parent has gene, pass to offspring
 				offspring.connections.Add(conn);
@@ -434,6 +434,7 @@
 			for (int i = 0; i < species.Count; i++) {
 				species[i].history.Add(species[i].speciesFitness);
 				if (i > 2 && species[i].history.Count > 15 && species[i].speciesFitness - species[i].history[14] < 0.5f) {
+					Console.WriteLine("Species Stagnation! Species: " + i);
 					totalFitness -= species[i].speciesFitness;
 					species.RemoveAt(i);
 					i--;
@@ -448,7 +449,7 @@
 			if (genusHistory.Count > genusStagGens)
 				genusHistory.RemoveAt(0);
 			if (genusHistory.Count >= genusStagGens && genusHistory[genusHistory.Count-1] - genusHistory[0] < 0.05f) {
-				//Console.WriteLine("Genus Stagnation!" + k);
+				Console.WriteLine("Genus Stagnation! " + k);
 				for (int i = 2; i < species.Count; i++) {
 					totalFitness -= species[i].speciesFitness;
 					species.RemoveAt(i);
@@ -461,6 +462,7 @@
 			if (k == cycles - 1 || fitnesses.Max() >= trainingCutoff) {
 				//Console.WriteLine("--Generations Taken: " + k);
 				generationsTaken = k;
+				Console.WriteLine(String.Format("Success! --> k: {0,3}  AvrF: {1,3:N2}  MaxF: {2,3:N2}  Species: {3}", k, fitnesses.Average(), fitnesses.Max(), species.Where(x => x.Count != 0).Count()));
 				break;//Return unaltered results when finished
 			}
 
@@ -542,8 +544,8 @@
 			}
 
 
-			if (k % (cycles/10) == 0)
-					Console.WriteLine(String.Format("k: {0,3}  AvrF: {1,3:N2}  MaxF: {2,3:N2}  Species: {3}", k, fitnesses.Average(), fitnesses.Max(), species.Where(x => x.Count != 0).Count()));
+			//if (k % (cycles/10) == 0)
+			Console.WriteLine(String.Format("k: {0,3}  AvrF: {1,3:N2}  MaxF: {2,3:N2}  Species: {3}", k, fitnesses.Average(), fitnesses.Max(), species.Where(x => x.Count != 0).Count()));
 		}
 
 		for (int i = 0; i < population.Count; i++)

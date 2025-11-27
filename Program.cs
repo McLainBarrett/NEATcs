@@ -7,7 +7,7 @@ public class Program {
 		List<int> nodeCounts = new List<int>();
 		List<int> generationsTaken = new List<int>();
 		int successes = 0;
-		for (int i = 0; i < 20; i++) {
+		for (int i = 0; i < 5; i++) {
 			var myResults = Train(XOR, generationSize:150, cycles: 100);
 			var top = myResults.Item1[0];
 			results.Add(top.fitness);
@@ -20,7 +20,7 @@ public class Program {
 			Console.WriteLine(String.Format("Game: {0} -- Result: {1} -- Successes|Failures|Percentage: {2}|{3}|{4}% Size: {5} nodes Generations Taken: {6}", 
 				i, Math.Round(results[i], 2), successes, i - successes + 1, Math.Round(successes / (i + 1f) * 100), top.nodes.Count - 4, generationsTaken.Average()));
 		}
-		Console.WriteLine(String.Format("Av. nodes: {0}", Math.Round(nodeCounts.Average(), 4)));
+		//Console.WriteLine(String.Format("Av. nodes: {0}", Math.Round(nodeCounts.Average(), 4)));
 	}
 
 	static float XOR(NN nn, bool verbose = false) {
